@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Employee NBA - Attendance Dashboard</title>
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Plotly.js for advanced graphs -->
+  <script src="https://cdn.plot.ly/plotly-2.29.1.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --secondary: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --background: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --radius: 12px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--background);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header Styles */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title i {
+      color: var(--primary);
+    }
+
+    /* Search Section */
+    .search-section {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 12px;
+      max-width: 600px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .search-btn {
+      padding: 14px 24px;
+      background: var(--primary);
+      color: white;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .search-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    /* Profile Card */
+    .profile-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .profile-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .profile-avatar {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .profile-info h2 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .profile-info p {
+      color: var(--text-light);
+      font-size: 16px;
+    }
+
+    .profile-details {
+      display: flex;
+      gap: 24px;
+    }
+
+    .detail-item {
+      text-align: right;
+    }
+
+    .detail-label {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      transition: transform 0.3s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .metric-header {
+      display: flex;
+      justify-content: between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .metric-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+    }
+
+    .metric-icon.in-time { background: var(--success); }
+    .metric-icon.out-time { background: var(--primary); }
+    .metric-icon.bay-hours { background: var(--warning); }
+    .metric-icon.break-hours { background: var(--secondary); }
+
+    .metric-label {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .metric-change {
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .metric-change.positive { color: var(--success); }
+    .metric-change.negative { color: var(--danger); }
+
+    /* Charts Section */
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .chart-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .chart-container {
+      height: 400px;
+    }
+
+    /* Risk Analysis */
+    .risk-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    .risk-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .risk-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .risk-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .risk-list {
+      flex: 1;
+    }
+
+    .risk-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .risk-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .risk-indicator.low { background: var(--success); }
+    .risk-indicator.medium { background: var(--warning); }
+    .risk-indicator.high { background: var(--danger); }
+
+    .risk-text {
+      flex: 1;
+    }
+
+    .risk-label {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .risk-description {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    .risk-score-container {
+      text-align: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+      border-radius: var(--radius);
+      min-width: 150px;
+    }
+
+    .risk-score {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .risk-score-label {
+      font-size: 14px;
+      color: var(--text-light);
+    }
+
+    /* Recommendations */
+    .recommendations-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .recommendations-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .recommendations-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .recommendation-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: #f0f9ff;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .recommendation-icon {
+      color: var(--primary);
+      font-size: 18px;
+      margin-top: 2px;
+    }
+
+    .recommendation-text {
+      flex: 1;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 16px;
+      }
+      
+      .profile-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+      }
+      
+      .profile-details {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .risk-content {
+        flex-direction: column;
+        gap: 20px;
+      }
+      
+      .risk-score-container {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-title">
+        <i class="fas fa-chart-line"></i>
+        Employee NBA - Attendance Dashboard
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="search-section">
+      <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search employee by ID or name (e.g. AL)" />
+        <button class="search-btn" id="searchBtn">
+          <i class="fas fa-search"></i>
+          Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Profile Card -->
+    <div class="profile-card" id="profileCard">
+      <div class="profile-left">
+        <div class="profile-avatar" id="empAvatar">—</div>
+        <div class="profile-info">
+          <h2 id="empId">Employee ID</h2>
+          <p id="designation">Designation —</p>
+        </div>
+      </div>
+      <div class="profile-details">
+        <div class="detail-item">
+          <div class="detail-label">Account</div>
+          <div class="detail-value" id="account">—</div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-label">Billed</div>
+          <div class="detail-value" id="billed">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-icon in-time">
+            <i class="fas fa-sign-in-alt"></i>
+          </div>
+        </div>
+        <div class="metric-label">Avg. In Time</div>
+        <div class="metric-value" id="avgIn">—</div>
+        <div class="metric-change positive" id="avgInChange">+0.0h vs avg</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-icon out-time">
+            <i class="fas fa-sign-out-alt"></i>
+          </div>
+        </div>
+        <div class="metric-label">Avg. Out Time</div>
+        <div class="metric-value" id="avgOut">—</div>
+        <div class="metric-change positive" id="avgOutChange">+0.0h vs avg</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-icon bay-hours">
+            <i class="fas fa-building"></i>
+          </div>
+        </div>
+        <div class="metric-label">Avg. Bay Hours</div>
+        <div class="metric-value" id="avgBay">—</div>
+        <div class="metric-change positive" id="avgBayChange">+0.0h vs avg</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-header">
+          <div class="metric-icon break-hours">
+            <i class="fas fa-coffee"></i>
+          </div>
+        </div>
+        <div class="metric-label">Avg. Break Hours</div>
+        <div class="metric-value" id="avgBreak">—</div>
+        <div class="metric-change negative" id="avgBreakChange">-0.0h vs avg</div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Compliance Quadrant (Benchmark Comparison)</div>
+        </div>
+        <div class="chart-container" id="compliance-quadrant"></div>
+      </div>
+      
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-title">Leave Analysis (Half-Day vs Full-Day)</div>
+        </div>
+        <div class="chart-container" id="leave-analysis"></div>
+      </div>
+    </div>
+
+    <!-- Risk Analysis -->
+    <div class="risk-card">
+      <div class="risk-header">
+        <div class="risk-title">Risk Analysis</div>
+      </div>
+      <div class="risk-content">
+        <div class="risk-list" id="riskList">
+          <!-- Risk items will be populated by JavaScript -->
+        </div>
+        <div class="risk-score-container">
+          <div class="risk-score" id="riskScore">—</div>
+          <div class="risk-score-label">Composite Risk Score</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations-card">
+      <div class="recommendations-title">
+        <i class="fas fa-lightbulb"></i>
+        Recommended Actions
+      </div>
+      <div class="recommendations-list" id="recommendationSection">
+        <div class="recommendation-item">
+          <div class="recommendation-icon">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="recommendation-text">
+            Search an employee ID and press Search to view personalized recommendations.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
